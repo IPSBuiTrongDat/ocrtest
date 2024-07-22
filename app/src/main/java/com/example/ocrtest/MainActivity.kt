@@ -1,9 +1,11 @@
 package com.example.ocrtest
 
+import android.graphics.Bitmap
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -15,7 +17,6 @@ import com.example.ocrtest.ui.ConfirmScreen
 import com.example.ocrtest.ui.DatabaseScreen
 import com.example.ocrtest.ui.HomeScreen
 import com.example.ocrtest.ui.TranslateScreen
-
 import com.example.ocrtest.viewmodel.TranslationViewModel
 import com.example.ocrtest.viewmodel.TranslationViewModelFactory
 

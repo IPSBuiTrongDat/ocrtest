@@ -37,13 +37,13 @@ fun HomeScreen(navController: NavController) {
                 onClick = { navController.navigate("capture") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
             ) {
-                Text(text = "Take Picture from Camera")
+                Text(text = "カメラ起動")
             }
             Button(
                 onClick = { navController.navigate("view_database") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "View Database")
+                Text(text = "データ表示")
             }
         }
     }

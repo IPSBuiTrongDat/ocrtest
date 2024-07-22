@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import java.util.Date
 
 class TranslationViewModel(private val repository: TranslationRepository) : ViewModel() {
     private val _translations = MutableStateFlow<List<TranslationEntity>>(emptyList())
@@ -23,12 +22,7 @@ class TranslationViewModel(private val repository: TranslationRepository) : View
         }
     }
 
-    fun insertTranslation(word: String, meaning: String) {
-        val translationEntity = TranslationEntity(
-            word = word,
-            meaning = meaning,
-            writtenDate = Date()
-        )
+    fun insertTranslation(translationEntity: TranslationEntity) {
         viewModelScope.launch {
             repository.insert(translationEntity)
         }

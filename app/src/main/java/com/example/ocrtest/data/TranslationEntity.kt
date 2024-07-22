@@ -9,5 +9,7 @@ data class TranslationEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val word: String,
     val meaning: String,
-    val writtenDate: Date
+    val type: String,
+    val memo: String,
+    val importDay: Date
 )

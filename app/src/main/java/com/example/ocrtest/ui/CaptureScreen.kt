@@ -112,7 +112,7 @@ private fun takePhoto(context: Context, navController: NavController, imageCaptu
 
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                 val savedUri = output.savedUri ?: Uri.fromFile(photoFile)
-                navController.navigate("confirm/${savedUri.toString()}")
+                navController.navigate("confirm/${Uri.encode(savedUri.toString())}")
             }
         }
     )
