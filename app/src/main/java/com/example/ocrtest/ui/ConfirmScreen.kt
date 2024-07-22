@@ -82,11 +82,10 @@ fun ConfirmScreen(navController: NavController, photoUri: String) {
 //}
 private fun recognizeText(navController: NavController, photoUri: Uri) {
     val image = InputImage.fromFilePath(navController.context, photoUri)
-
-    // Recognizer cho Latin
+    // Recognizer for latin
     val latinRecognizer = TextRecognition.getClient(TextRecognizerOptions.Builder().build())
 
-    // Recognizer cho Nhật
+    // Recognizer for japanese
     val japaneseRecognizer = TextRecognition.getClient(JapaneseTextRecognizerOptions.Builder().build())
 
     // Process Latin text

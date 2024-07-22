@@ -2,6 +2,7 @@ package com.example.ocrtest.ui
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,7 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
+import kotlin.math.log
 
 @Composable
 fun CaptureScreen(navController: NavController) {
@@ -63,7 +65,7 @@ fun CaptureScreen(navController: NavController) {
                 )
                 preview.setSurfaceProvider(previewView.surfaceProvider)
             } catch (exc: Exception) {
-                // Handle exceptions
+                Log.e(exc.toString(), "Unable to connect to camera")
             }
         }, ContextCompat.getMainExecutor(context))
 
@@ -126,3 +128,12 @@ private fun getOutputDirectory(context: Context): File {
 }
 
 private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+
+
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewCaptureScreen() {
+//    // Mock NavController for preview
+//    val navController = rememberNavController()
+//    CaptureScreen(navController = navController)
+//}

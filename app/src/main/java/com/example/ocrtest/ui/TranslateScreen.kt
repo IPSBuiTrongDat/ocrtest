@@ -24,10 +24,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.example.ocrtest.data.TranslationDao
 import com.example.ocrtest.data.TranslationEntity
+import com.example.ocrtest.repository.TranslationRepository
 import com.example.ocrtest.viewmodel.TranslationViewModel
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
@@ -258,4 +262,16 @@ private fun translateText(
         .addOnFailureListener { e ->
             Log.e("TranslateScreen", "Model download failed", e)
         }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PreviewTranslateScreen() {
+    val navController = rememberNavController()
+    val viewModel = TranslationViewModel(TranslationRepository(translationDao = TranslationDao))
+    TranslateScreen(
+        navController = navController,
+        viewModel = viewModel,
+        recognizedText = "Sample text"
+    )
 }
