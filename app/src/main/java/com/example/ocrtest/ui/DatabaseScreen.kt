@@ -38,7 +38,7 @@ fun TranslationList(translations: List<TranslationEntity>) {
     LazyColumn {
         items(translations) { translationEntity ->
             Text(
-                text = "Word: ${translationEntity.word}\nMeaning: ${translationEntity.meaning}\nDate: ${translationEntity.writtenDate}",
+                text = "Word: ${translationEntity.word}\nMeaning: ${translationEntity.meaning}\nDate: ${translationEntity.importDay}",
                 modifier = Modifier.padding(8.dp)
             )
         }
