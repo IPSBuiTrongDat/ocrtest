@@ -4,16 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import com.example.ocrtest.data.TranslationDatabase
-import com.example.ocrtest.ui.CaptureScreen
-import com.example.ocrtest.ui.ConfirmScreen
-import com.example.ocrtest.ui.DatabaseScreen
-import com.example.ocrtest.ui.HomeScreen
-import com.example.ocrtest.ui.TranslateScreen
+import com.example.ocrtest.ui.*
 import com.example.ocrtest.viewmodel.TranslationViewModel
 import com.example.ocrtest.viewmodel.TranslationViewModelFactory
 
@@ -41,7 +38,12 @@ class MainActivity : ComponentActivity() {
                     val recognizedText = backStackEntry.arguments?.getString("recognizedText") ?: ""
                     TranslateScreen(navController, viewModel, recognizedText)
                 }
-                composable("view_database") { DatabaseScreen(viewModel) }
+                composable("view_database") {
+                    val translations = viewModel.allTranslations.observeAsState()
+                    translations.value?.let {
+                        DatabaseScreen(it)
+                    }
+                }
             }
         }
     }

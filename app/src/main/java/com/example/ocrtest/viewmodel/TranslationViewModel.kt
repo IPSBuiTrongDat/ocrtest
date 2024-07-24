@@ -1,14 +1,26 @@
 package com.example.ocrtest.viewmodel
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ocrtest.data.TranslationDao
 import com.example.ocrtest.data.TranslationEntity
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 class TranslationViewModel(private val translationDao: TranslationDao) : ViewModel() {
-    val allTranslations: Flow<List<TranslationEntity>> = translationDao.getAllTranslations()
+    private val _allTranslations = MutableLiveData<List<TranslationEntity>>()
+    val allTranslations: LiveData<List<TranslationEntity>> = _allTranslations
+
+    init {
+        loadAllTranslations()
+    }
+
+    fun loadAllTranslations() {
+        viewModelScope.launch {
+            _allTranslations.postValue(translationDao.getAllTranslationsList())
+        }
+    }
 
     fun insertTranslation(translation: TranslationEntity) {
         viewModelScope.launch {

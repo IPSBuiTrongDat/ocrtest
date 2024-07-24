@@ -1,99 +1,93 @@
 package com.example.ocrtest.ui
 
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.ocrtest.viewmodel.TranslationViewModel
-import kotlinx.coroutines.launch
+import com.example.ocrtest.data.TranslationEntity
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DatabaseScreen(translations: List<TranslationEntity>) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Database") },
+                colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
+            )
+        },
+        content = { padding ->
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                val horizontalScrollState = rememberScrollState()
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp)
+                        .horizontalScroll(horizontalScrollState)
+                ) {
+                    // Header Row
+                    Row {
+                        HeaderText("ID", Modifier.weight(1f))
+                        HeaderText("語彙", Modifier.weight(2f))
+                        HeaderText("意味", Modifier.weight(2f))
+                        HeaderText("分類", Modifier.weight(1f))
+                        HeaderText("メモ", Modifier.weight(2f))
+                    }
+                    Divider(color = Color.Gray, thickness = 1.dp)
+
+                    // Data Rows
+                    translations.forEach { translation ->
+                        Row {
+                            BodyText(translation.id.toString(), Modifier.weight(1f))
+                            BodyText(translation.word, Modifier.weight(2f))
+                            BodyText(translation.meaning, Modifier.weight(2f))
+                            BodyText(translation.type, Modifier.weight(1f))
+                            BodyText(translation.memo, Modifier.weight(2f))
+                        }
+                        Divider(color = Color.Gray, thickness = 1.dp)
+                    }
+                }
+            }
+        }
+    )
+}
 
 @Composable
-fun DatabaseScreen(viewModel: TranslationViewModel = viewModel()) {
-    val translations = viewModel.allTranslations.collectAsState(initial = emptyList())
+fun HeaderText(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyLarge,
+        modifier = modifier
+            .padding(8.dp)
+            .height(40.dp),
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.onPrimary,
+        maxLines = 1
+    )
+}
 
-    val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-            .verticalScroll(scrollState)
-    ) {
-        Row(modifier = Modifier.horizontalScroll(scrollState)) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
-            ) {
-                Text("ID", modifier = Modifier.padding(8.dp))
-                translations.value.forEach { translation ->
-                    Text(translation.id.toString(), modifier = Modifier.padding(8.dp))
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .weight(2f)
-                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
-            ) {
-                Text("語彙", modifier = Modifier.padding(8.dp))
-                translations.value.forEach { translation ->
-                    Text(translation.word, modifier = Modifier.padding(8.dp))
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .weight(2f)
-                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
-            ) {
-                Text("意味", modifier = Modifier.padding(8.dp))
-                translations.value.forEach { translation ->
-                    Text(translation.meaning, modifier = Modifier.padding(8.dp))
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
-            ) {
-                Text("分類", modifier = Modifier.padding(8.dp))
-                translations.value.forEach { translation ->
-                    Text(translation.type, modifier = Modifier.padding(8.dp))
-                }
-            }
-            Column(
-                modifier = Modifier
-                    .weight(2f)
-                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
-            ) {
-                Text("メモ", modifier = Modifier.padding(8.dp))
-                translations.value.forEach { translation ->
-                    Text(translation.memo, modifier = Modifier.padding(8.dp))
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Button(onClick = {
-                coroutineScope.launch {
-                    viewModel.clearAllTranslations()
-                }
-            }) {
-                Text("クリア")
-            }
-        }
-    }
+@Composable
+fun BodyText(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = modifier
+            .padding(8.dp)
+            .height(40.dp),
+        textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.onBackground,
+        maxLines = 1
+    )
 }

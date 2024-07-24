@@ -14,6 +14,9 @@ interface TranslationDao {
     @Query("SELECT * FROM translations")
     fun getAllTranslations(): Flow<List<TranslationEntity>>
 
+    @Query("SELECT * FROM translations")
+    suspend fun getAllTranslationsList(): List<TranslationEntity>
+
     @Query("DELETE FROM translations")
     suspend fun clearAll()
 }
