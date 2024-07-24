@@ -2,29 +2,23 @@ package com.example.ocrtest.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.ocrtest.data.TranslationDao
 import com.example.ocrtest.data.TranslationEntity
-import com.example.ocrtest.repository.TranslationRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-class TranslationViewModel(private val repository: TranslationRepository) : ViewModel() {
-    private val _translations = MutableStateFlow<List<TranslationEntity>>(emptyList())
-    val translations: StateFlow<List<TranslationEntity>> = _translations.asStateFlow()
+class TranslationViewModel(private val translationDao: TranslationDao) : ViewModel() {
+    val allTranslations: Flow<List<TranslationEntity>> = translationDao.getAllTranslations()
 
-    init {
+    fun insertTranslation(translation: TranslationEntity) {
         viewModelScope.launch {
-            repository.getAllTranslations().collect { translationList ->
-                _translations.value = translationList
-            }
+            translationDao.insert(translation)
         }
     }
 
-    fun insertTranslation(translationEntity: TranslationEntity) {
+    fun clearAllTranslations() {
         viewModelScope.launch {
-            repository.insert(translationEntity)
+            translationDao.clearAll()
         }
     }
 }

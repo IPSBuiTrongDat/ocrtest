@@ -1,46 +1,99 @@
 package com.example.ocrtest.ui
 
-import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.ocrtest.data.TranslationEntity
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.ocrtest.viewmodel.TranslationViewModel
+import kotlinx.coroutines.launch
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DatabaseScreen(viewModel: TranslationViewModel) {
-    val translations by viewModel.translations.collectAsState()
+fun DatabaseScreen(viewModel: TranslationViewModel = viewModel()) {
+    val translations = viewModel.allTranslations.collectAsState(initial = emptyList())
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Database") }
-            )
-        }
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+            .verticalScroll(scrollState)
     ) {
-        TranslationList(translations)
-    }
-}
+        Row(modifier = Modifier.horizontalScroll(scrollState)) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
+            ) {
+                Text("ID", modifier = Modifier.padding(8.dp))
+                translations.value.forEach { translation ->
+                    Text(translation.id.toString(), modifier = Modifier.padding(8.dp))
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(2f)
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
+            ) {
+                Text("語彙", modifier = Modifier.padding(8.dp))
+                translations.value.forEach { translation ->
+                    Text(translation.word, modifier = Modifier.padding(8.dp))
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(2f)
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
+            ) {
+                Text("意味", modifier = Modifier.padding(8.dp))
+                translations.value.forEach { translation ->
+                    Text(translation.meaning, modifier = Modifier.padding(8.dp))
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
+            ) {
+                Text("分類", modifier = Modifier.padding(8.dp))
+                translations.value.forEach { translation ->
+                    Text(translation.type, modifier = Modifier.padding(8.dp))
+                }
+            }
+            Column(
+                modifier = Modifier
+                    .weight(2f)
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface)
+            ) {
+                Text("メモ", modifier = Modifier.padding(8.dp))
+                translations.value.forEach { translation ->
+                    Text(translation.memo, modifier = Modifier.padding(8.dp))
+                }
+            }
+        }
 
-@Composable
-fun TranslationList(translations: List<TranslationEntity>) {
-    LazyColumn {
-        items(translations) { translationEntity ->
-            Text(
-                text = "Word: ${translationEntity.word}\nMeaning: ${translationEntity.meaning}\nDate: ${translationEntity.importDay}",
-                modifier = Modifier.padding(8.dp)
-            )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(onClick = {
+                coroutineScope.launch {
+                    viewModel.clearAllTranslations()
+                }
+            }) {
+                Text("クリア")
+            }
         }
     }
 }

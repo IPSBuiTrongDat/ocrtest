@@ -2,7 +2,7 @@ package com.example.ocrtest.data
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import java.util.Date
+import java.util.*
 
 @Entity(tableName = "translations")
 data class TranslationEntity(
