@@ -1,5 +1,6 @@
 package com.example.ocrtest.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -13,8 +14,10 @@ class TranslationViewModel(private val translationDao: TranslationDao) : ViewMod
     val allTranslations: LiveData<List<TranslationEntity>> = _allTranslations
 
     init {
+        Log.e("Open datatable", "loadAllTranslations123")
         loadAllTranslations()
     }
+
 
     fun loadAllTranslations() {
         viewModelScope.launch {

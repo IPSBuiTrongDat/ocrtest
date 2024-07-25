@@ -1,6 +1,7 @@
 package com.example.ocrtest.ui
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +42,7 @@ fun HomeScreen(navController: NavController) {
             ) {
                 Text(text = "カメラ起動")
             }
+            Log.e("Open datatable", "open----------------------------------------")
             Button(
                 onClick = { navController.navigate("view_database") },
                 modifier = Modifier.fillMaxWidth()

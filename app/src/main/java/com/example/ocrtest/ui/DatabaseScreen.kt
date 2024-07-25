@@ -1,20 +1,26 @@
 package com.example.ocrtest.ui
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.ocrtest.data.TranslationEntity
+import com.example.ocrtest.viewmodel.TranslationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DatabaseScreen(translations: List<TranslationEntity>) {
+fun DatabaseScreen(translations: List<TranslationEntity>,translationViewModel: TranslationViewModel) {
+    LaunchedEffect(key1 = "view_database") {
+        translationViewModel.loadAllTranslations()
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -29,32 +35,29 @@ fun DatabaseScreen(translations: List<TranslationEntity>) {
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
             ) {
-                val horizontalScrollState = rememberScrollState()
-
-                Column(
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(16.dp)
-                        .horizontalScroll(horizontalScrollState)
                 ) {
-                    // Header Row
-                    Row {
-                        HeaderText("ID", Modifier.weight(1f))
-                        HeaderText("語彙", Modifier.weight(2f))
-                        HeaderText("意味", Modifier.weight(2f))
-                        HeaderText("分類", Modifier.weight(1f))
-                        HeaderText("メモ", Modifier.weight(2f))
+                    item {
+                        LazyRow {
+                            item { HeaderText("ID") }
+                            item { HeaderText("語彙") }
+                            item { HeaderText("意味") }
+                            item { HeaderText("分類") }
+                            item { HeaderText("メモ") }
+                        }
                     }
-                    Divider(color = Color.Gray, thickness = 1.dp)
 
-                    // Data Rows
-                    translations.forEach { translation ->
-                        Row {
-                            BodyText(translation.id.toString(), Modifier.weight(1f))
-                            BodyText(translation.word, Modifier.weight(2f))
-                            BodyText(translation.meaning, Modifier.weight(2f))
-                            BodyText(translation.type, Modifier.weight(1f))
-                            BodyText(translation.memo, Modifier.weight(2f))
+                    items(translations.size) { index ->
+                        val translation = translations[index]
+                        LazyRow {
+                            item { BodyText(translation.id.toString()) }
+                            item { BodyText(translation.word) }
+                            item { BodyText(translation.meaning) }
+                            item { BodyText(translation.type) }
+                            item { BodyText(translation.memo) }
                         }
                         Divider(color = Color.Gray, thickness = 1.dp)
                     }
@@ -65,13 +68,13 @@ fun DatabaseScreen(translations: List<TranslationEntity>) {
 }
 
 @Composable
-fun HeaderText(text: String, modifier: Modifier = Modifier) {
+fun HeaderText(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyLarge,
-        modifier = modifier
+        modifier = Modifier
             .padding(8.dp)
-            .height(40.dp),
+            .width(100.dp),
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onPrimary,
         maxLines = 1
@@ -79,13 +82,13 @@ fun HeaderText(text: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun BodyText(text: String, modifier: Modifier = Modifier) {
+fun BodyText(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.bodyMedium,
-        modifier = modifier
+        modifier = Modifier
             .padding(8.dp)
-            .height(40.dp),
+            .width(100.dp),
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onBackground,
         maxLines = 1
