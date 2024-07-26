@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.ocrtest.data.TranslationEntity
@@ -67,7 +67,7 @@ fun DatabaseScreen(translations: List<TranslationEntity>, translationViewModel: 
                         ) {
                             item { BodyText((index + 1).toString()) }
                             item { BodyText(shortenText(translation.word)) }
-                            item { BodyText(translation.meaning) }
+                            item { BodyText(shortenText(translation.meaning)) }
                             item { BodyText(translation.type) }
                             item { BodyText(translation.memo) }
                             item { BodyText(formatDate(translation.importDay)) }
@@ -110,7 +110,8 @@ fun BodyText(text: String) {
             .width(100.dp),
         textAlign = TextAlign.Center,
         color = MaterialTheme.colorScheme.onBackground,
-        maxLines = 1
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis
     )
 }
 
