@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ContentCopy
@@ -12,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -52,6 +55,10 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     val showSaveErrorDialog = remember { mutableStateOf(false) }
     val showSaveSuccessButton = remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val textFieldWidth = screenWidth * 0.8f
 
     val clipboardManager = LocalClipboardManager.current
 
@@ -168,7 +175,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.width(textFieldWidth).verticalScroll(rememberScrollState())) {
                     TextField(
                         value = inputText,
                         onValueChange = { inputText = it },
@@ -192,7 +199,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.width(textFieldWidth).verticalScroll(rememberScrollState())) {
                     TextField(
                         value = translatedText,
                         onValueChange = { translatedText = it },
@@ -216,7 +223,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 .fillMaxWidth()
                 .padding(bottom = 8.dp)
             ) {
-                Box(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.width(textFieldWidth).verticalScroll(rememberScrollState())) {
                     TextField(
                         value = memo,
                         onValueChange = { memo = it },

@@ -112,7 +112,8 @@ private suspend fun recognizeText(navController: NavController, photoUri: Uri, o
             .addOnSuccessListener { visionText ->
                 if (visionText.text.isNotEmpty()) {
                     textRecognized = true
-                    navController.navigate("translate/${Uri.encode(visionText.text)}")
+                    val text = visionText.text.take(100) // Lấy 100 ký tự đầu tiên
+                    navController.navigate("translate/${Uri.encode(text)}")
                 }
             }
             .addOnFailureListener { e ->
@@ -124,7 +125,8 @@ private suspend fun recognizeText(navController: NavController, photoUri: Uri, o
             .addOnSuccessListener { visionText ->
                 if (visionText.text.isNotEmpty()) {
                     textRecognized = true
-                    navController.navigate("translate/${Uri.encode(visionText.text)}")
+                    val text = visionText.text.take(100) // Lấy 100 ký tự đầu tiên
+                    navController.navigate("translate/${Uri.encode(text)}")
                 }
             }
             .addOnFailureListener { e ->
