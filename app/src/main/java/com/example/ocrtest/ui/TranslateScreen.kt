@@ -33,7 +33,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.Date
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalCoroutinesApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun TranslateScreen(navController: NavController, viewModel: TranslationViewModel, recognizedText: String) {
@@ -153,33 +153,8 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                         languagesNotDownloaded.value = languagesToDownload
                         totalLanguagesToDownload.value = languagesToDownload.size
                         downloadProgress.value = 0
-                        isDownloading.value = true
+                        isDownloading.value = false
                         showDownloadPopup.value = true
-
-                        languagesToDownload.forEach { language ->
-                            scope.launch {
-                                val downloadResult = withTimeoutOrNull(30000) {
-                                    suspendCancellableCoroutine<Unit> { continuation ->
-                                        downloadLanguage(language, onSuccess = {
-                                            continuation.resume(Unit) {}
-                                        }, onFailure = {
-                                            continuation.cancel()
-                                        })
-                                    }
-                                }
-                                if (downloadResult == null) {
-                                    showDownloadPopup.value = false
-                                    showErrorPopup.value = true
-                                } else {
-                                    downloadProgress.value++
-                                    if (downloadProgress.value == totalLanguagesToDownload.value) {
-                                        isDownloading.value = false
-                                        showDownloadPopup.value = true
-                                        onComplete()
-                                    }
-                                }
-                            }
-                        }
                     } else {
                         onComplete()
                     }
@@ -278,8 +253,8 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                             .padding(8.dp)
                             .height(100.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
-                                textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
-                            )
+                        textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
+                    )
                 }
             }
 
@@ -442,12 +417,12 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = if (isDownloading.value) "ダウンロード中 (${downloadProgress.value}/${totalLanguagesToDownload.value})" else "ダウンロード完了",
-                            color = if (isDownloading.value) Color.Blue else Color.Green
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
                         if (isDownloading.value) {
+                            Text(
+                                text = "ダウンロード中 (${downloadProgress.value}/${totalLanguagesToDownload.value})",
+                                color = Color.Blue
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = {
@@ -457,19 +432,23 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                                 Text("キャンセル")
                             }
                         } else {
+                            Text(text = "ダウンロードが必要です", color = Color.Red)
                             Button(onClick = {
-                                showDownloadPopup.value = false
-                                scope.launch {
-                                    translateText(
-                                        inputText.text,
-                                        sourceLanguage,
-                                        targetLanguage
-                                    ) { translation ->
-                                        translatedText = TextFieldValue(translation)
-                                    }
+                                isDownloading.value = true
+                                languagesNotDownloaded.value.forEach { language ->
+                                    downloadLanguage(language, onSuccess = {
+                                        downloadProgress.value++
+                                        if (downloadProgress.value == totalLanguagesToDownload.value) {
+                                            isDownloading.value = false
+                                            showDownloadPopup.value = false
+                                        }
+                                    }, onFailure = {
+                                        isDownloading.value = false
+                                        showErrorPopup.value = true
+                                    })
                                 }
                             }) {
-                                Text("翻訳")
+                                Text("ダウンロード")
                             }
                             Button(onClick = {
                                 showDownloadPopup.value = false
@@ -587,4 +566,3 @@ private fun translateText(
             Log.e("TranslateScreen", "Model download failed", e)
         }
 }
-
