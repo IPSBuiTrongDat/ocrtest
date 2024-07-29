@@ -1,6 +1,7 @@
 package com.example.ocrtest.ui
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -42,11 +43,8 @@ import java.util.*
 fun TranslateScreen(navController: NavController, viewModel: TranslationViewModel, recognizedText: String) {
     var inputText by remember { mutableStateOf(TextFieldValue(recognizedText)) }
     var translatedText by remember { mutableStateOf(TextFieldValue("")) }
-    var memo by remember { mutableStateOf(TextFieldValue("")) }
-    var category by remember { mutableStateOf("") }
     var sourceLanguage by remember { mutableStateOf("日本語") }
     var targetLanguage by remember { mutableStateOf("英語") }
-    var categoryExpanded by remember { mutableStateOf(false) }
     var sourceLanguageExpanded by remember { mutableStateOf(false) }
     var targetLanguageExpanded by remember { mutableStateOf(false) }
 
@@ -54,8 +52,8 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     var downloadStatus by remember { mutableStateOf<String?>(null) }
     var isDownloadComplete by remember { mutableStateOf(false) }
     var languagesToDownload by remember { mutableStateOf(emptyList<String>()) }
+    var showExitDialog by remember { mutableStateOf(false) }
 
-    val categories = listOf("単語", "文章")
     val languages = listOf("日本語", "英語", "ベトナム語")
     val context = LocalContext.current
 
@@ -136,60 +134,6 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 }
             }
 
-            // Memo TextField
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .width(textFieldWidth)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    TextField(
-                        value = memo,
-                        onValueChange = { memo = it },
-                        placeholder = { Text("メモ") },
-                        modifier = Modifier
-                            .padding(8.dp)
-                            .height(100.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
-                        textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
-                    )
-                }
-            }
-
-
-            // Category Selector
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text("分類", modifier = Modifier.alignByBaseline())
-                Box {
-                    Button(onClick = { categoryExpanded = true }) {
-                        Text(category.ifEmpty { "選択" })
-                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Category")
-                    }
-                    DropdownMenu(
-                        expanded = categoryExpanded,
-                        onDismissRequest = { categoryExpanded = false }
-                    ) {
-                        categories.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(option) },
-                                onClick = {
-                                    category = option
-                                    categoryExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-
             // Language Selector
             Row(modifier = Modifier
                 .fillMaxWidth()
@@ -243,7 +187,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 onClick = {
                     checkAndDownloadLanguages(context, sourceLanguage, targetLanguage) { neededLanguages ->
                         languagesToDownload = neededLanguages
-                        downloadStatus = "ダウンロードする言語: ${neededLanguages.joinToString(", ")}"
+                        downloadStatus = "この言語をダウンロードしますか: ${neededLanguages.joinToString(", ")}"
                     }
                 },
                 modifier = Modifier
@@ -253,21 +197,26 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 Text("翻訳")
             }
 
-            // Save Button
-            Button(
-                onClick = {
-                    val translationEntity = TranslationEntity(
-                        word = inputText.text,
-                        meaning = translatedText.text,
-                        type = category,
-                        memo = memo.text,
-                        importDay = Date()
-                    )
-                    viewModel.insertTranslation(translationEntity)
-                },
-                modifier = Modifier.fillMaxWidth()
+            // Re-capture and Exit Buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("端末に保存")
+                Button(
+                    onClick = { navController.navigate("capture") },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("再撮影")
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Button(
+                    onClick = { showExitDialog = true },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("終了")
+                }
             }
         }
 
@@ -287,6 +236,13 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                             Text(text = "ダウンロード中: ${languagesToDownload.joinToString(", ")}", color = Color.Blue)
                             Spacer(modifier = Modifier.height(16.dp))
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = {
+                                isLoading = false
+                                downloadStatus = null
+                            }) {
+                                Text("キャンセル")
+                            }
                         } else if (isDownloadComplete) {
                             Text(text = "ダウンロードしました", color = Color.Green)
                             Button(onClick = {
@@ -319,13 +275,70 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                                         }
                                     }
                                 }) {
-                                    Text("再ダウンロード")
+                                    Text("はい")
                                 }
                                 Button(onClick = {
                                     downloadStatus = null
                                 }) {
-                                    Text("キャンセル")
+                                    Text("いいえ")
                                 }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Download Failed Popup
+        if (downloadStatus == "ダウンロードに失敗しました") {
+            Dialog(
+                onDismissRequest = { downloadStatus = null },
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "ダウンロードに失敗しました", color = Color.Red)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            downloadStatus = null
+                        }) {
+                            Text("閉じる")
+                        }
+                    }
+                }
+            }
+        }
+
+        // Exit Confirmation Dialog
+        if (showExitDialog) {
+            Dialog(
+                onDismissRequest = { showExitDialog = false },
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "アプリを終了しますか？", color = Color.Black)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceEvenly,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(onClick = {
+                                showExitDialog = false
+                                (context as? Activity)?.finish()
+                            }) {
+                                Text("はい")
+                            }
+                            Button(onClick = { showExitDialog = false }) {
+                                Text("いいえ")
                             }
                         }
                     }
@@ -452,4 +465,3 @@ private fun translateText(
             Log.e("TranslateScreen", "Model download failed", e)
         }
 }
-

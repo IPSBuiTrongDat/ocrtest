@@ -76,7 +76,7 @@ fun ConfirmScreen(navController: NavController, photoUri: String) {
         if (showErrorDialog) {
             AlertDialog(
                 onDismissRequest = { showErrorDialog = false },
-                title = { Text(text = "認識失敗しました。再撮影しますか？") },
+                title = { Text(text = "エラー1001:認識失敗しました。再撮影しますか？") },
                 confirmButton = {
                     TextButton(
                         onClick = {
@@ -112,7 +112,7 @@ private suspend fun recognizeText(navController: NavController, photoUri: Uri, o
             .addOnSuccessListener { visionText ->
                 if (visionText.text.isNotEmpty()) {
                     textRecognized = true
-                    val text = visionText.text.take(100) // Lấy 100 ký tự đầu tiên
+                    val text = visionText.text.take(100)
                     navController.navigate("translate/${Uri.encode(text)}")
                 }
             }
@@ -125,7 +125,7 @@ private suspend fun recognizeText(navController: NavController, photoUri: Uri, o
             .addOnSuccessListener { visionText ->
                 if (visionText.text.isNotEmpty()) {
                     textRecognized = true
-                    val text = visionText.text.take(100) // Lấy 100 ký tự đầu tiên
+                    val text = visionText.text.take(100)
                     navController.navigate("translate/${Uri.encode(text)}")
                 }
             }

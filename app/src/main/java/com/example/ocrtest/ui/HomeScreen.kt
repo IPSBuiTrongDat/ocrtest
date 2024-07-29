@@ -1,62 +1,114 @@
 package com.example.ocrtest.ui
 
-import android.annotation.SuppressLint
-import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
+import android.app.Activity
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun HomeScreen(navController: NavController) {
+    var showExitDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("ホーム画面") }
             )
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Button(
-                onClick = { navController.navigate("capture") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+        },
+        content = { padding ->
+            Box(
+                modifier = Modifier
+                    .padding(padding)
+                    .fillMaxSize(),
+                contentAlignment = Alignment.Center
             ) {
-                Text(text = "カメラ起動")
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(
+                            onClick = { navController.navigate("capture") },
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(8.dp)
+                        ) {
+                            Text("カメラで撮影")
+                        }
+//                        Button(
+//                            onClick = { navController.navigate("database") },
+//                            modifier = Modifier
+//                                .weight(1f)
+//                                .padding(8.dp)
+//                        ) {
+//                            Text("データ表示")
+//                        }
+                        Button(
+                            onClick = { showExitDialog = true },
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(8.dp)
+                        ) {
+                            Text("終了")
+                        }
+                    }
+                }
             }
-            Log.e("Open datatable", "open----------------------------------------")
-            Button(
-                onClick = { navController.navigate("view_database") },
-                modifier = Modifier.fillMaxWidth()
+        }
+    )
+
+    if (showExitDialog) {
+        Dialog(
+            onDismissRequest = { showExitDialog = false },
+            properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = true)
+        ) {
+            Surface(
+                shape = MaterialTheme.shapes.medium,
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier.padding(16.dp)
             ) {
-                Text(text = "データ表示")
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = "本当に終了しますか？")
+                    Row(
+                        modifier = Modifier.padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(
+                            onClick = {
+                                showExitDialog = false
+                            },
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text("いいえ")
+                        }
+                        Button(
+                            onClick = {
+                                val activity = context as? Activity
+                                activity?.finish()
+                            },
+                            modifier = Modifier.padding(8.dp)
+                        ) {
+                            Text("はい")
+                        }
+                    }
+                }
             }
         }
     }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewHomeScreen() {
-    // Mock NavController for preview
-    val navController = rememberNavController()
-    HomeScreen(navController = navController)
 }

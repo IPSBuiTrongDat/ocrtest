@@ -10,7 +10,7 @@ import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -26,7 +26,6 @@ import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
-import kotlin.math.log
 
 @Composable
 fun CaptureScreen(navController: NavController) {
@@ -69,6 +68,8 @@ fun CaptureScreen(navController: NavController) {
             }
         }, ContextCompat.getMainExecutor(context))
 
+        var showCancelDialog by remember { mutableStateOf(false) }
+
         Column(modifier = Modifier.fillMaxSize()) {
             AndroidView(
                 factory = { context ->
@@ -76,18 +77,51 @@ fun CaptureScreen(navController: NavController) {
                 },
                 modifier = Modifier.weight(1f)
             )
-            Button(
-                onClick = {
-                    imageCapture?.let { capture ->
-                        takePhoto(context, navController, capture)
+            Row(modifier = Modifier.padding(16.dp)) {
+                Button(
+                    onClick = {
+                        imageCapture?.let { capture ->
+                            takePhoto(context, navController, capture)
+                        }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp)
+                ) {
+                    Text(text = "撮影")
+                }
+                Button(
+                    onClick = {
+                        showCancelDialog = true
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = 8.dp)
+                ) {
+                    Text(text = "キャンセル")
+                }
+            }
+        }
+
+        if (showCancelDialog) {
+            AlertDialog(
+                onDismissRequest = { showCancelDialog = false },
+                title = { Text(text = "確認") },
+                text = { Text(text = "ホーム画面に戻りますか？") },
+                dismissButton = {
+                    Button(onClick = { showCancelDialog = false }) {
+                        Text("いいえ")
                     }
                 },
-                modifier = Modifier
-                    .padding(16.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(text = "Capture Photo")
-            }
+                confirmButton = {
+                    Button(onClick = {
+                        navController.navigate("home")
+                        showCancelDialog = false
+                    }) {
+                        Text("はい")
+                    }
+                }
+            )
         }
     }
 }
@@ -128,12 +162,3 @@ private fun getOutputDirectory(context: Context): File {
 }
 
 private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
-
-
-//@Preview(showBackground = true)
-//@Composable
-//fun PreviewCaptureScreen() {
-//    // Mock NavController for preview
-//    val navController = rememberNavController()
-//    CaptureScreen(navController = navController)
-//}
