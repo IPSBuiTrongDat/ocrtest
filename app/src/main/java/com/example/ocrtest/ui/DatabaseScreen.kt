@@ -33,7 +33,7 @@ fun DatabaseScreen(translations: List<TranslationEntity>, translationViewModel: 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Database") },
+                title = { Text("データ表示画面") },
                 colors = TopAppBarDefaults.smallTopAppBarColors(containerColor = MaterialTheme.colorScheme.primary)
             )
         },

@@ -26,7 +26,7 @@ fun HomeScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Home") }
+                title = { Text("ホーム画面") }
             )
         }
     ) {

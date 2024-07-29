@@ -166,7 +166,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Translate Text") }
+                title = { Text("翻訳画面") }
             )
         }
     ) { paddingValues ->

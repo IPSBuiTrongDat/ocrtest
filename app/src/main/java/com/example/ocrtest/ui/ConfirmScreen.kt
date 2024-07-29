@@ -29,7 +29,7 @@ fun ConfirmScreen(navController: NavController, photoUri: String) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Confirm Photo") }
+                title = { Text("確認画面") }
             )
         }
     ) {
