@@ -4,7 +4,9 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ContentCopy
@@ -13,7 +15,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,6 +59,12 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     val languages = listOf("日本語", "英語", "ベトナム語")
     val context = LocalContext.current
 
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+    val textFieldWidth = screenWidth * 0.8f
+
+    val clipboardManager = LocalClipboardManager.current
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -68,61 +79,87 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 .padding(16.dp)
         ) {
             // Input TextField
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             ) {
-                BasicTextField(
-                    value = inputText,
-                    onValueChange = { inputText = it },
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp)
-                        .height(150.dp)
-                        .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
-                    textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
-                )
-                IconButton(onClick = { /* Copy to clipboard logic */ }) {
+                        .width(textFieldWidth)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    TextField(
+                        value = inputText,
+                        onValueChange = { inputText = it },
+                        placeholder = { Text("認識された内容") },
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .height(150.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
+                    )
+                }
+                IconButton(onClick = {
+                    clipboardManager.setText(AnnotatedString(inputText.text))
+                }) {
                     Icon(Icons.Filled.ContentCopy, contentDescription = "Copy")
                 }
             }
 
             // Output TextField
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             ) {
-                BasicTextField(
-                    value = translatedText,
-                    onValueChange = { translatedText = it },
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp)
-                        .height(150.dp)
-                        .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
-                    textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
-                )
-                IconButton(onClick = { /* Copy to clipboard logic */ }) {
+                        .width(textFieldWidth)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    TextField(
+                        value = translatedText,
+                        onValueChange = { translatedText = it },
+                        placeholder = { Text("ここで翻訳される") },
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .height(150.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
+                    )
+                }
+                IconButton(onClick = {
+                    clipboardManager.setText(AnnotatedString(translatedText.text))
+                }) {
                     Icon(Icons.Filled.ContentCopy, contentDescription = "Copy")
                 }
             }
 
             // Memo TextField
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp)
             ) {
-                BasicTextField(
-                    value = memo,
-                    onValueChange = { memo = it },
+                Box(
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(8.dp)
-                        .height(100.dp)
-                        .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
-                    textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
-                )
+                        .width(textFieldWidth)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    TextField(
+                        value = memo,
+                        onValueChange = { memo = it },
+                        placeholder = { Text("メモ") },
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .height(100.dp)
+                            .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
+                        textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
+                    )
+                }
             }
+
 
             // Category Selector
             Row(modifier = Modifier
