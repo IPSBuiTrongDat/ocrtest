@@ -34,7 +34,6 @@ import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
-import java.io.File
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,11 +63,11 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Translate Text") }
-            )
-        }
+//        topBar = {
+//            TopAppBar(
+//                title = { Text("Translate Text") }
+//            )
+//        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -135,31 +134,31 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
 
             // Language Selector
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Box {
-                    Button(onClick = { sourceLanguageExpanded = true }) {
-                        Text(sourceLanguage)
-                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Source Language")
-                    }
-                    DropdownMenu(
-                        expanded = sourceLanguageExpanded,
-                        onDismissRequest = { sourceLanguageExpanded = false }
-                    ) {
-                        languages.forEach { language ->
-                            DropdownMenuItem(
-                                text = { Text(language) },
-                                onClick = {
-                                    sourceLanguage = language
-                                    sourceLanguageExpanded = false
-                                }
-                            )
-                        }
-                    }
-                }
+//            Row(modifier = Modifier
+//                .fillMaxWidth()
+//                .padding(bottom = 8.dp),
+//                horizontalArrangement = Arrangement.SpaceBetween
+//            ) {
+//                Box {
+//                    Button(onClick = { sourceLanguageExpanded = true }) {
+//                        Text(sourceLanguage)
+//                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Source Language")
+//                    }
+//                    DropdownMenu(
+//                        expanded = sourceLanguageExpanded,
+//                        onDismissRequest = { sourceLanguageExpanded = false }
+//                    ) {
+//                        languages.forEach { language ->
+//                            DropdownMenuItem(
+//                                text = { Text(language) },
+//                                onClick = {
+//                                    sourceLanguage = language
+//                                    sourceLanguageExpanded = false
+//                                }
+//                            )
+//                        }
+//                    }
+//                }
                 Box {
                     Button(onClick = { targetLanguageExpanded = true }) {
                         Text(targetLanguage)
@@ -187,7 +186,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 onClick = {
                     checkAndDownloadLanguages(context, sourceLanguage, targetLanguage) { neededLanguages ->
                         languagesToDownload = neededLanguages
-                        downloadStatus = "この言語をダウンロードしますか: ${neededLanguages.joinToString(", ")}"
+                        downloadStatus = "この言語をダウンロードしますか。"
                     }
                 },
                 modifier = Modifier
@@ -197,7 +196,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 Text("翻訳")
             }
 
-            // Re-capture and Exit Buttons
+            // Re-capture and Complete Buttons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -238,8 +237,8 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = {
-                                isLoading = false
                                 downloadStatus = null
+                                isLoading = false
                             }) {
                                 Text("キャンセル")
                             }
@@ -289,30 +288,6 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
         }
 
-        // Download Failed Popup
-        if (downloadStatus == "ダウンロードに失敗しました") {
-            Dialog(
-                onDismissRequest = { downloadStatus = null },
-                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
-            ) {
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "ダウンロードに失敗しました", color = Color.Red)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {
-                            downloadStatus = null
-                        }) {
-                            Text("閉じる")
-                        }
-                    }
-                }
-            }
-        }
-
         // Exit Confirmation Dialog
         if (showExitDialog) {
             Dialog(
@@ -333,6 +308,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                         ) {
                             Button(onClick = {
                                 showExitDialog = false
+                                // Code to exit the app
                                 (context as? Activity)?.finish()
                             }) {
                                 Text("はい")
@@ -346,7 +322,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
         }
     }
-}
+//}
 
 private fun checkAndDownloadLanguages(
     context: android.content.Context,
@@ -369,10 +345,7 @@ private fun checkAndDownloadLanguages(
         }
     ).distinct()
 
-    val downloadedLanguages = loadDownloadedLanguages(context)
-    val languagesToDownload = neededLanguages.filterNot { it in downloadedLanguages }
-
-    onResult(languagesToDownload)
+    onResult(neededLanguages)
 }
 
 private fun downloadLanguages(
@@ -411,21 +384,17 @@ private fun downloadLanguages(
     }
 }
 
-private fun loadDownloadedLanguages(context: android.content.Context): List<String> {
-    val file = File(context.filesDir, "downloaded_languages.txt")
-    return if (file.exists()) {
-        file.readLines()
-    } else {
-        emptyList()
-    }
-}
-
 private fun saveDownloadedLanguages(context: android.content.Context, languages: List<String>) {
-    val file = File(context.filesDir, "downloaded_languages.txt")
-    file.appendText(languages.joinToString("\n") + "\n")
+    val sharedPreferences = context.getSharedPreferences("DownloadedLanguages", android.content.Context.MODE_PRIVATE)
+    val editor = sharedPreferences.edit()
+    languages.forEach { language ->
+        editor.putBoolean(language, true)
+    }
+    editor.apply()
 }
 
-private fun translateText(
+private fun translat
+eText(
     text: String,
     sourceLanguage: String,
     targetLanguage: String,
