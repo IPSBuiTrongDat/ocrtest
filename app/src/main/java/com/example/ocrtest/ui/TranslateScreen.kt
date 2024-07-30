@@ -63,11 +63,11 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
-//        topBar = {
-//            TopAppBar(
-//                title = { Text("Translate Text") }
-//            )
-//        }
+        topBar = {
+            TopAppBar(
+                title = { Text("Translate Text") }
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -134,31 +134,31 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
 
             // Language Selector
-//            Row(modifier = Modifier
-//                .fillMaxWidth()
-//                .padding(bottom = 8.dp),
-//                horizontalArrangement = Arrangement.SpaceBetween
-//            ) {
-//                Box {
-//                    Button(onClick = { sourceLanguageExpanded = true }) {
-//                        Text(sourceLanguage)
-//                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Source Language")
-//                    }
-//                    DropdownMenu(
-//                        expanded = sourceLanguageExpanded,
-//                        onDismissRequest = { sourceLanguageExpanded = false }
-//                    ) {
-//                        languages.forEach { language ->
-//                            DropdownMenuItem(
-//                                text = { Text(language) },
-//                                onClick = {
-//                                    sourceLanguage = language
-//                                    sourceLanguageExpanded = false
-//                                }
-//                            )
-//                        }
-//                    }
-//                }
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Box {
+                    Button(onClick = { sourceLanguageExpanded = true }) {
+                        Text(sourceLanguage)
+                        Icon(Icons.Filled.ArrowDropDown, contentDescription = "Source Language")
+                    }
+                    DropdownMenu(
+                        expanded = sourceLanguageExpanded,
+                        onDismissRequest = { sourceLanguageExpanded = false }
+                    ) {
+                        languages.forEach { language ->
+                            DropdownMenuItem(
+                                text = { Text(language) },
+                                onClick = {
+                                    sourceLanguage = language
+                                    sourceLanguageExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
                 Box {
                     Button(onClick = { targetLanguageExpanded = true }) {
                         Text(targetLanguage)
@@ -243,7 +243,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                                 Text("キャンセル")
                             }
                         } else if (isDownloadComplete) {
-                            Text(text = "ダウンロードしました", color = Color.Green)
+                            Text(text = "ダウンロードしました", color = Color.Black)
                             Button(onClick = {
                                 downloadStatus = null
                                 translateText(
@@ -322,7 +322,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
         }
     }
-//}
+}
 
 private fun checkAndDownloadLanguages(
     context: android.content.Context,
@@ -393,8 +393,7 @@ private fun saveDownloadedLanguages(context: android.content.Context, languages:
     editor.apply()
 }
 
-private fun translat
-eText(
+private fun translateText(
     text: String,
     sourceLanguage: String,
     targetLanguage: String,
