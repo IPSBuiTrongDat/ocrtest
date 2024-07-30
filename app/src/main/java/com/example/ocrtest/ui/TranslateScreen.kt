@@ -3,6 +3,8 @@ package com.example.ocrtest.ui
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -50,6 +52,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     var isDownloadComplete by remember { mutableStateOf(false) }
     var languagesToDownload by remember { mutableStateOf(emptyList<String>()) }
     var showExitDialog by remember { mutableStateOf(false) }
+    var showNoInternetDialog by remember { mutableStateOf(false) }
 
     val languages = listOf("英語", "ベトナム語")
     val context = LocalContext.current
@@ -114,10 +117,9 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
 
             // Language Selector
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 8.dp),
+            Row(modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.End
             ) {
                 Box {
@@ -204,23 +206,27 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = status, color = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
-                        if (status.startsWith("この言語をダウンロードしますか")) {
+                        if (status == "この言語をダウンロードしますか: ${languagesToDownload.joinToString(", ")}") {
                             Row(
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Button(onClick = {
-                                    isLoading = true
-                                    downloadStatus = "ダウンロード中"
-                                    downloadLanguages(context, languagesToDownload) { success ->
-                                        isLoading = false
-                                        isDownloadComplete = success
-                                        if (success) {
-                                            saveDownloadedLanguages(context, languagesToDownload)
-                                            downloadStatus = "ダウンロードしました"
-                                        } else {
-                                            downloadStatus = "ダウンロードに失敗しました"
+                                    if (isNetworkAvailable(context)) {
+                                        isLoading = true
+                                        downloadStatus = "ダウンロード中"
+                                        downloadLanguages(context, languagesToDownload) { success ->
+                                            isLoading = false
+                                            isDownloadComplete = success
+                                            if (success) {
+                                                saveDownloadedLanguages(context, languagesToDownload)
+                                                downloadStatus = "ダウンロードしました"
+                                            } else {
+                                                downloadStatus = "ダウンロードに失敗しました"
+                                            }
                                         }
+                                    } else {
+                                        showNoInternetDialog = true
                                     }
                                 }) {
                                     Text("はい")
@@ -234,11 +240,33 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                         } else {
                             Button(onClick = {
                                 downloadStatus = null
-                                isLoading = false
-                                isDownloadComplete = false
                             }) {
                                 Text("閉じる")
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // No Internet Popup
+        if (showNoInternetDialog) {
+            Dialog(
+                onDismissRequest = { showNoInternetDialog = false },
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "インターネットに接続していません", color = Color.Red)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            showNoInternetDialog = false
+                        }) {
+                            Text("閉じる")
                         }
                     }
                 }
@@ -320,8 +348,6 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
                             downloadStatus = null
-                            isLoading = false
-                            isDownloadComplete = false
                         }) {
                             Text("閉じる")
                         }
@@ -363,6 +389,13 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
         }
     }
+}
+
+private fun isNetworkAvailable(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val activeNetwork = connectivityManager.activeNetwork
+    val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+    return networkCapabilities != null && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }
 
 private fun checkAndDownloadLanguages(
