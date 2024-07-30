@@ -34,6 +34,7 @@ import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
+import java.io.File
 import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -186,7 +187,18 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 onClick = {
                     checkAndDownloadLanguages(context, sourceLanguage, targetLanguage) { neededLanguages ->
                         languagesToDownload = neededLanguages
-                        downloadStatus = "この言語をダウンロードしますか。"
+                        if (languagesToDownload.isNotEmpty()) {
+                            downloadStatus = "言語をダウンロードしますか"
+                        } else {
+                            // If no languages need to be downloaded, proceed with translation
+                            translateText(
+                                inputText.text,
+                                sourceLanguage,
+                                targetLanguage
+                            ) { translation ->
+                                translatedText = TextFieldValue(translation)
+                            }
+                        }
                     }
                 },
                 modifier = Modifier
@@ -237,8 +249,8 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = {
-                                downloadStatus = null
                                 isLoading = false
+                                downloadStatus = null
                             }) {
                                 Text("キャンセル")
                             }
@@ -282,6 +294,30 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                                     Text("いいえ")
                                 }
                             }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Download Failed Popup
+        if (downloadStatus == "ダウンロードに失敗しました") {
+            Dialog(
+                onDismissRequest = { downloadStatus = null },
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(text = "ダウンロードに失敗しました", color = Color.Red)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            downloadStatus = null
+                        }) {
+                            Text("閉じる")
                         }
                     }
                 }
@@ -345,7 +381,10 @@ private fun checkAndDownloadLanguages(
         }
     ).distinct()
 
-    onResult(neededLanguages)
+    val downloadedLanguages = loadDownloadedLanguages(context)
+    val languagesToDownload = neededLanguages.filterNot { it in downloadedLanguages }
+
+    onResult(languagesToDownload)
 }
 
 private fun downloadLanguages(
@@ -384,12 +423,17 @@ private fun downloadLanguages(
     }
 }
 
+private fun loadDownloadedLanguages(context: android.content.Context): List<String> {
+    val sharedPreferences = context.getSharedPreferences("DownloadedLanguages", android.content.Context.MODE_PRIVATE)
+    return sharedPreferences.getStringSet("languages", emptySet())?.toList() ?: emptyList()
+}
+
 private fun saveDownloadedLanguages(context: android.content.Context, languages: List<String>) {
     val sharedPreferences = context.getSharedPreferences("DownloadedLanguages", android.content.Context.MODE_PRIVATE)
     val editor = sharedPreferences.edit()
-    languages.forEach { language ->
-        editor.putBoolean(language, true)
-    }
+    val currentLanguages = sharedPreferences.getStringSet("languages", mutableSetOf()) ?: mutableSetOf()
+    currentLanguages.addAll(languages)
+    editor.putStringSet("languages", currentLanguages)
     editor.apply()
 }
 

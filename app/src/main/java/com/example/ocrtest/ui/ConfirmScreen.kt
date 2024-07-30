@@ -69,7 +69,7 @@ fun ConfirmScreen(navController: NavController, photoUri: String) {
                     },
                     modifier = Modifier.padding(8.dp)
                 ) {
-                    Text("テキスト認識")
+                    Text("文字認識")
                 }
             }
         }
