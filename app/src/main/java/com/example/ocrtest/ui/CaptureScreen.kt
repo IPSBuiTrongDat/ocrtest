@@ -21,7 +21,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
-import com.example.inventory.R
+import com.example.ocrtest.R
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*

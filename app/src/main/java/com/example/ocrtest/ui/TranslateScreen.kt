@@ -203,7 +203,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = status, color = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         if (status == "この言語をダウンロードしますか: ${languagesToDownload.joinToString(", ")}") {
@@ -220,7 +220,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                                             isDownloadComplete = success
                                             if (success) {
                                                 saveDownloadedLanguages(context, languagesToDownload)
-                                                downloadStatus = "ダウンロードしました"
+                                                downloadStatus = "ダウンロードに成功しました"
                                             } else {
                                                 downloadStatus = "ダウンロードに失敗しました"
                                             }
@@ -260,7 +260,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
+                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = "インターネットに接続していません", color = Color.Red)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
@@ -312,20 +312,20 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "ダウンロードしました", color = Color.Green)
+                        Text(text = "ダウンロードに成功しました", color = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
                             isDownloadComplete = false
                             downloadStatus = null
-                            translateText(
-                                inputText.text,
-                                "日本語",
-                                targetLanguage
-                            ) { translation ->
-                                translatedText = TextFieldValue(translation)
-                            }
+//                            translateText(
+//                                inputText.text,
+//                                "日本語",
+//                                targetLanguage
+//                            ) { translation ->
+//                                translatedText = TextFieldValue(translation)
+//                            }
                         }) {
-                            Text("翻訳")
+                            Text("閉じる")
                         }
                     }
                 }
@@ -443,7 +443,7 @@ private fun downloadLanguages(
 
         scope.launch {
             try {
-                withTimeout(60000) {
+                withTimeout(120000) {
                     translator.downloadModelIfNeeded().await()
                 }
                 successCount++
