@@ -2,7 +2,10 @@ package com.example.ocrtest.ui
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -52,7 +55,6 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     var isDownloadComplete by remember { mutableStateOf(false) }
     var languagesToDownload by remember { mutableStateOf(emptyList<String>()) }
     var showExitDialog by remember { mutableStateOf(false) }
-    var showNoInternetDialog by remember { mutableStateOf(false) }
 
     val languages = listOf("英語", "ベトナム語")
     val context = LocalContext.current
@@ -60,6 +62,30 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val textFieldWidth = screenWidth * 0.8f
+
+    // Register a BroadcastReceiver to monitor network changes
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val networkReceiver = remember {
+        object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+                val isConnected = networkCapabilities != null &&
+                        networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                if (!isConnected && isLoading) {
+                    downloadStatus = "インターネットに接続していません"
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    DisposableEffect(Unit) {
+        val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+        context.registerReceiver(networkReceiver, filter)
+        onDispose {
+            context.unregisterReceiver(networkReceiver)
+        }
+    }
 
     Scaffold { paddingValues ->
         Column(
@@ -203,10 +229,10 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = status, color = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
-                        if (status == "この言語をダウンロードしますか: ${languagesToDownload.joinToString(", ")}") {
+                        if (status.contains("ダウンロードしますか")) {
                             Row(
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                                 modifier = Modifier.fillMaxWidth()
@@ -226,7 +252,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                                             }
                                         }
                                     } else {
-                                        showNoInternetDialog = true
+                                        downloadStatus = "インターネットに接続していません"
                                     }
                                 }) {
                                     Text("はい")
@@ -249,30 +275,6 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
         }
 
-        // No Internet Popup
-        if (showNoInternetDialog) {
-            Dialog(
-                onDismissRequest = { showNoInternetDialog = false },
-                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
-            ) {
-                Surface(
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = "インターネットに接続していません", color = Color.Red)
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = {
-                            showNoInternetDialog = false
-                        }) {
-                            Text("閉じる")
-                        }
-                    }
-                }
-            }
-        }
-
         // Downloading Popup
         if (isLoading) {
             Dialog(
@@ -282,7 +284,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 Surface(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.padding(16.dp)
+                            modifier = Modifier.padding(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = "ダウンロード中", color = Color.Blue)
@@ -316,16 +318,15 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
                             isDownloadComplete = false
-                            downloadStatus = null
-//                            translateText(
-//                                inputText.text,
-//                                "日本語",
-//                                targetLanguage
-//                            ) { translation ->
-//                                translatedText = TextFieldValue(translation)
-//                            }
+                            translateText(
+                                inputText.text,
+                                "日本語",
+                                targetLanguage
+                            ) { translation ->
+                                translatedText = TextFieldValue(translation)
+                            }
                         }) {
-                            Text("閉じる")
+                            Text("翻訳")
                         }
                     }
                 }
@@ -333,7 +334,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
         }
 
         // Download Failed Popup
-        if (downloadStatus == "ダウンロードに失敗しました") {
+        if (downloadStatus == "ダウンロードに失敗しました" || downloadStatus == "インターネットに接続していません") {
             Dialog(
                 onDismissRequest = { downloadStatus = null },
                 properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
@@ -391,13 +392,6 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     }
 }
 
-private fun isNetworkAvailable(context: Context): Boolean {
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val activeNetwork = connectivityManager.activeNetwork
-    val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
-    return networkCapabilities != null && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-}
-
 private fun checkAndDownloadLanguages(
     context: Context,
     sourceLanguage: String,
@@ -443,7 +437,7 @@ private fun downloadLanguages(
 
         scope.launch {
             try {
-                withTimeout(120000) {
+                withTimeout(180000) {
                     translator.downloadModelIfNeeded().await()
                 }
                 successCount++
@@ -516,3 +510,11 @@ private fun translateText(
             Log.e("TranslateScreen", "Model download failed", e)
         }
 }
+
+private fun isNetworkAvailable(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+    return networkCapabilities != null &&
+            networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+}
+
