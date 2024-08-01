@@ -26,13 +26,7 @@ fun ConfirmScreen(navController: NavController, photoUri: String) {
     var showErrorDialog by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("確認画面") }
-            )
-        }
-    ) {
+    Scaffold() {
         Column(
             modifier = Modifier
                 .fillMaxSize()

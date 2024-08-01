@@ -68,8 +68,6 @@ fun CaptureScreen(navController: NavController) {
             }
         }, ContextCompat.getMainExecutor(context))
 
-        var showCancelDialog by remember { mutableStateOf(false) }
-
         Column(modifier = Modifier.fillMaxSize()) {
             AndroidView(
                 factory = { context ->
@@ -77,7 +75,12 @@ fun CaptureScreen(navController: NavController) {
                 },
                 modifier = Modifier.weight(1f)
             )
-            Row(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
                 Button(
                     onClick = {
                         imageCapture?.let { capture ->
@@ -85,43 +88,20 @@ fun CaptureScreen(navController: NavController) {
                         }
                     },
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(end = 8.dp)
+                        .padding(8.dp)
                 ) {
                     Text(text = "撮影")
                 }
                 Button(
                     onClick = {
-                        showCancelDialog = true
+                        navController.navigate("home")
                     },
                     modifier = Modifier
-                        .weight(1f)
-                        .padding(start = 8.dp)
+                        .padding(8.dp)
                 ) {
                     Text(text = "キャンセル")
                 }
             }
-        }
-
-        if (showCancelDialog) {
-            AlertDialog(
-                onDismissRequest = { showCancelDialog = false },
-                title = { Text(text = "確認") },
-                text = { Text(text = "ホーム画面に戻りますか？") },
-                dismissButton = {
-                    Button(onClick = { showCancelDialog = false }) {
-                        Text("いいえ")
-                    }
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        navController.navigate("home")
-                        showCancelDialog = false
-                    }) {
-                        Text("はい")
-                    }
-                }
-            )
         }
     }
 }
