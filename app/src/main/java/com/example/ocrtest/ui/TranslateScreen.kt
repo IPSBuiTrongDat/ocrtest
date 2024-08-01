@@ -3,10 +3,7 @@ package com.example.ocrtest.ui
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -34,13 +31,20 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.example.ocrtest.data.TranslationEntity
 import com.example.ocrtest.viewmodel.TranslationViewModel
+import com.google.mlkit.common.model.DownloadConditions
+import com.google.mlkit.common.model.RemoteModelManager
 import com.google.mlkit.nl.translate.TranslateLanguage
 import com.google.mlkit.nl.translate.Translation
 import com.google.mlkit.nl.translate.Translator
 import com.google.mlkit.nl.translate.TranslatorOptions
 import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
+import java.io.IOException
 import java.util.*
+
+
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -56,53 +60,31 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
     var isDownloadComplete by remember { mutableStateOf(false) }
     var languagesToDownload by remember { mutableStateOf(emptyList<String>()) }
     var showExitDialog by remember { mutableStateOf(false) }
+    var showNoInternetDialog by remember { mutableStateOf(false) }
+
+    var currentNetwork by remember { mutableStateOf(false) }
 
     val languages = listOf("英語", "ベトナム語")
     val context = LocalContext.current
 
-//    var currentNetwork by remember { mutableStateOf(false) }
-//    var showNoInternetDialog by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
-    val textFieldWidth = screenWidth
+    val textFieldWidth = screenWidth * 0.8f
 
-    // Register a BroadcastReceiver to monitor network changes
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val networkReceiver = remember {
-        object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-                val isConnected = networkCapabilities != null &&
-                        networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                if (!isConnected && isLoading) {
-                    downloadStatus = "インターネットに接続していません"
-                    isLoading = false
+
+    LaunchedEffect(Unit) {
+        while(true) {
+            delay(1000)
+            currentNetwork = isNetworkAvailable(context)
+            if(!currentNetwork) {
+                cancelDownload(context)
+                if(downloadStatus == "ダウンロード中") {
+                    downloadStatus = null
+                    showNoInternetDialog = true
                 }
             }
         }
     }
-
-    DisposableEffect(Unit) {
-        val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
-        context.registerReceiver(networkReceiver, filter)
-        onDispose {
-            context.unregisterReceiver(networkReceiver)
-        }
-    }
-
-//    LaunchedEffect(Unit) {
-//        while(true) {
-//            delay(1000)
-//            currentNetwork = isNetworkAvailable(context)
-//            if(!currentNetwork) {
-//                cancelDownload(context)
-//                if(downloadStatus == "ダウンロード中") {
-//                    downloadStatus = null
-//                    showNoInternetDialog = true
-//                }
-//            }
-//        }
-//    }
 
     Scaffold { paddingValues ->
         Column(
@@ -111,13 +93,11 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-//            Text(text = "テキスト", fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
             // Input TextField
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
-                    .align(Alignment.CenterHorizontally)
             ) {
                 Box(
                     modifier = Modifier
@@ -127,24 +107,21 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     TextField(
                         value = inputText,
                         onValueChange = { inputText = it },
-                        placeholder = { Text("テキスト") },
+                        placeholder = { Text("認識された内容") },
                         modifier = Modifier
                             .padding(8.dp)
-                            .height(200.dp)
-                            .fillMaxWidth()
+                            .height(150.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
                         textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
                     )
                 }
             }
 
-            Text(text = "翻訳結果", fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
             // Output TextField
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 8.dp)
-                    .align(Alignment.CenterHorizontally)
             ) {
                 Box(
                     modifier = Modifier
@@ -154,11 +131,10 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     TextField(
                         value = translatedText,
                         onValueChange = { translatedText = it },
-                        placeholder = { Text("翻訳結果") },
+                        placeholder = { Text("ここで翻訳される") },
                         modifier = Modifier
                             .padding(8.dp)
-                            .height(200.dp)
-                            .fillMaxWidth()
+                            .height(150.dp)
                             .border(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)),
                         textStyle = LocalTextStyle.current.copy(fontSize = 18.sp)
                     )
@@ -207,7 +183,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                             }
                         } else {
                             languagesToDownload = neededLanguages
-                            downloadStatus = "翻訳の実行にはモデルデータが必要です。データをダウンロードしますか"
+                            downloadStatus = "ダウンロードしますか？"
                         }
                     }
                 },
@@ -255,7 +231,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(text = status, color = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
-                        if (status.contains("ダウンロードしますか")) {
+                        if (status == "ダウンロードしますか？") {
                             Row(
                                 horizontalArrangement = Arrangement.SpaceEvenly,
                                 modifier = Modifier.fillMaxWidth()
@@ -275,8 +251,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                                             }
                                         }
                                     } else {
-                                        downloadStatus = "インターネットに接続していません"
-//                                        showNoInternetDialog = true
+                                        showNoInternetDialog = true
                                     }
                                 }) {
                                     Text("はい")
@@ -299,6 +274,30 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
         }
 
+        // No Internet Popup
+        if (showNoInternetDialog) {
+            Dialog(
+                onDismissRequest = { showNoInternetDialog = false },
+                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surface,
+                    modifier = Modifier.padding(16.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "インターネットに接続していません", color = Color.Red)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            showNoInternetDialog = false
+                        }) {
+                            Text("閉じる")
+                        }
+                    }
+                }
+            }
+        }
+
         // Downloading Popup
         if (isLoading) {
             Dialog(
@@ -308,10 +307,10 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 Surface(
                     shape = MaterialTheme.shapes.medium,
                     color = MaterialTheme.colorScheme.surface,
-                            modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(text = "ダウンロード中", color = Color.Blue)
+                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(text = "ダウンロード中", color = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
                         Spacer(modifier = Modifier.height(16.dp))
@@ -343,6 +342,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
                             isDownloadComplete = false
+                            downloadStatus = null
 //                            translateText(
 //                                inputText.text,
 //                                "日本語",
@@ -359,7 +359,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
         }
 
         // Download Failed Popup
-        if (downloadStatus == "ダウンロードに失敗しました" || downloadStatus == "インターネットに接続していません") {
+        if (downloadStatus == "ダウンロードに失敗しました" && currentNetwork) {
             Dialog(
                 onDismissRequest = { downloadStatus = null },
                 properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
@@ -370,7 +370,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     modifier = Modifier.padding(16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = downloadStatus!!, color = Color.Red)
+                        Text(text = "ダウンロードに失敗しました", color = Color.Red)
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
                             downloadStatus = null
@@ -381,30 +381,6 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 }
             }
         }
-
-//        // No Internet Popup
-//        if (showNoInternetDialog) {
-//            Dialog(
-//                onDismissRequest = { showNoInternetDialog = false },
-//                properties = DialogProperties(dismissOnBackPress = true, dismissOnClickOutside = false)
-//            ) {
-//                Surface(
-//                    shape = MaterialTheme.shapes.medium,
-//                    color = MaterialTheme.colorScheme.surface,
-//                    modifier = Modifier.padding(16.dp)
-//                ) {
-//                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-//                        Text(text = "インターネットに接続していません", color = Color.Red)
-//                        Spacer(modifier = Modifier.height(16.dp))
-//                        Button(onClick = {
-//                            showNoInternetDialog = false
-//                        }) {
-//                            Text("閉じる")
-//                        }
-//                    }
-//                }
-//            }
-//        }
 
         // Exit Confirmation Dialog
         if (showExitDialog) {
@@ -417,7 +393,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                     color = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         Text(text = "アプリを終了しますか？", color = Color.Black)
                         Spacer(modifier = Modifier.height(16.dp))
                         Row(
@@ -439,6 +415,33 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
             }
         }
     }
+}
+
+fun cancelDownload(context: Context) {
+    val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+    val query = DownloadManager.Query().setFilterByStatus(
+        DownloadManager.STATUS_RUNNING or DownloadManager.STATUS_PENDING or DownloadManager.STATUS_PAUSED
+    )
+    val cursor = downloadManager.query(query)
+    val downloadIds = mutableListOf<Long>()
+
+    while (cursor.moveToNext()) {
+        val idIndex = cursor.getColumnIndex(DownloadManager.COLUMN_ID)
+        val id = cursor.getLong(idIndex)
+        downloadIds.add(id)
+    }
+    cursor.close()
+    downloadIds.forEach {
+            id -> downloadManager.remove(id)
+    }
+}
+
+
+private fun isNetworkAvailable(context: Context): Boolean {
+    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val activeNetwork = connectivityManager.activeNetwork
+    val networkCapabilities = connectivityManager.getNetworkCapabilities(activeNetwork)
+    return networkCapabilities != null && networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 }
 
 private fun checkAndDownloadLanguages(
@@ -463,8 +466,8 @@ private fun checkAndDownloadLanguages(
     ).distinct()
 
     val downloadedLanguages = loadDownloadedLanguages(context)
-    val languagesToDownload = neededLanguages.filterNot { it in downloadedLanguages }
-
+    val languagesToDownload = neededLanguages.filterNot { it in downloadedLanguages || it == "en"}
+    Log.e("TranslateScreen", "言語: $languagesToDownload")
     onResult(languagesToDownload)
 }
 
@@ -476,6 +479,7 @@ private fun downloadLanguages(
     var successCount = 0
     val scope = CoroutineScope(Dispatchers.IO)
 
+
     for (language in languages) {
         val options = TranslatorOptions.Builder()
             .setSourceLanguage(TranslateLanguage.fromLanguageTag(language)!!)
@@ -484,23 +488,60 @@ private fun downloadLanguages(
 
         val translator: Translator = Translation.getClient(options)
 
+        val modelManager = RemoteModelManager.getInstance()
+        val conditions = DownloadConditions.Builder()
+            .build()
+
+        Log.e("TranslateScreen", "download start")
         scope.launch {
             try {
-                withTimeout(180000) {
+                withTimeout(600000) {
+                    Log.e("TranslateScreen", "await start")
                     translator.downloadModelIfNeeded().await()
+                    Log.e("TranslateScreen", "await end")
                 }
                 successCount++
+                Log.e("TranslateScreen", "Count increase")
                 if (successCount == languages.size) {
                     withContext(Dispatchers.Main) {
                         onComplete(true)
                     }
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    onComplete(false)
-                }
+                Log.e("TranslateScreen", "Model download failed ${e.message}")
+                onComplete(false)
             }
         }
+
+
+
+//            .addOnSuccessListener {
+//                Log.i("TranslateScreen","passed success listener")
+//                Log.i("TranslateScreen","success")
+//            }
+//            .addOnCanceledListener {
+//                    Log.e("TranslateScreen", "Connect error")
+//            }
+//            .addOnFailureListener { e ->
+//                Log.e("TranslateScreen", "Model download failed ${e.message}")
+//            }
+//        scope.launch {
+//            try {
+//                withTimeout(60000){
+//                    while (!isNetworkAvailable(context)){
+//                        withContext(Dispatchers.Main){
+//                            onComplete(false)
+//                            Log.i("TranslateScreen", "Connection lost during download")
+//                        }
+//                        delay(1000)
+//                    }
+//                }
+//            } catch (e: Exception){
+//                withContext(Dispatchers.Main){
+//                    onComplete(false)
+//                }
+//            }
+//        }
     }
 }
 
@@ -545,43 +586,14 @@ private fun translateText(
 
     val translator: Translator = Translation.getClient(options)
 
-    translator.downloadModelIfNeeded()
-        .addOnSuccessListener {
-            translator.translate(text)
-                .addOnSuccessListener { translatedText ->
-                    onResult(translatedText)
-                }
-                .addOnFailureListener { e ->
-                    Log.e("TranslateScreen", "Translation failed", e)
-                }
+    translator.translate(text)
+        .addOnSuccessListener { translatedText ->
+            onResult(translatedText)
+            Log.i("TranslateScreen", "trans completed")
         }
         .addOnFailureListener { e ->
-            Log.e("TranslateScreen", "Model download failed", e)
+            Log.e("TranslateScreen", "Translation failed", e)
         }
-}
 
-private fun isNetworkAvailable(context: Context): Boolean {
-    val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-    val networkCapabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
-    return networkCapabilities != null &&
-            networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-}
 
-fun cancelDownload(context: Context) {
-    val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-    val query = DownloadManager.Query().setFilterByStatus(
-        DownloadManager.STATUS_RUNNING or DownloadManager.STATUS_PENDING or DownloadManager.STATUS_PAUSED
-    )
-    val cursor = downloadManager.query(query)
-    val downloadIds = mutableListOf<Long>()
-
-    while (cursor.moveToNext()) {
-        val idIndex = cursor.getColumnIndex(DownloadManager.COLUMN_ID)
-        val id = cursor.getLong(idIndex)
-        downloadIds.add(id)
-    }
-    cursor.close()
-    downloadIds.forEach {
-            id -> downloadManager.remove(id)
-    }
 }
