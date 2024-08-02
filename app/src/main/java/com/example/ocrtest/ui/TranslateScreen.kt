@@ -343,6 +343,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = {
                             isDownloadComplete = false
+                            downloadStatus = null
 //                            translateText(
 //                                inputText.text,
 //                                "日本語",
