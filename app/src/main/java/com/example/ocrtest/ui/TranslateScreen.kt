@@ -138,7 +138,7 @@ fun TranslateScreen(navController: NavController, viewModel: TranslationViewMode
                 }
             }
 
-            Text(text = "翻訳結果", fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
+//            Text(text = "翻訳結果", fontSize = 18.sp, modifier = Modifier.padding(bottom = 8.dp))
             // Output TextField
             Row(
                 modifier = Modifier

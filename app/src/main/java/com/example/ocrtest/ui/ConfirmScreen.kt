@@ -106,7 +106,7 @@ private suspend fun recognizeText(navController: NavController, photoUri: Uri, o
             .addOnSuccessListener { visionText ->
                 if (visionText.text.isNotEmpty()) {
                     textRecognized = true
-                    val text = visionText.text.take(100)
+                    val text = visionText.text.take(300)
                     navController.navigate("translate/${Uri.encode(text)}")
                 }
             }
